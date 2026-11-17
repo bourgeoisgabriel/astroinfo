@@ -1,0 +1,17 @@
+{
+  "appId": "com.astroinfo.app",
+  "appName": "AstroInfo",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#7b9dff"
+    }
+  }
+}
