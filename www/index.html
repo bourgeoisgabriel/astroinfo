@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e27">
+<link rel="manifest" href="manifest.json">
+<title>AstroInfo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+  body {
+    font-family: -apple-system, 'Roboto', sans-serif;
+    background: #0a0e27; color: #e8e8e8; line-height: 1.6;
+    overflow-x: hidden;
+    padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
+    -webkit-user-select: none; user-select: none;
+  }
+  body::before {
+    content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, white, transparent),
+      radial-gradient(1px 1px at 60% 70%, white, transparent),
+      radial-gradient(1.5px 1.5px at 80% 10%, white, transparent),
+      radial-gradient(1px 1px at 40% 90%, white, transparent),
+      radial-gradient(2px 2px at 90% 50%, white, transparent),
+      radial-gradient(1px 1px at 10% 60%, white, transparent);
+    background-size: 200% 200%; animation: twinkle 8s infinite alternate;
+    z-index: -1; opacity: 0.6;
+  }
+  @keyframes twinkle { from { opacity: 0.3; } to { opacity: 0.8; } }
+  .tabbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15, 20, 50, 0.97); backdrop-filter: blur(12px);
+    display: flex; justify-content: space-around;
+    padding: 8px 0 calc(8px + var(--safe-bottom));
+    border-top: 1px solid rgba(123, 157, 255, 0.2); z-index: 100;
+  }
+  .tab { flex: 1; text-align: center; padding: 8px; color: #7080a0; font-size: 11px; cursor: pointer; transition: color 0.2s; min-height: 56px; }
+  .tab .icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  .tab.active { color: #7b9dff; }
+  .page { display: none; padding: 20px 20px 90px; animation: fadeIn 0.3s; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .app-header { text-align: center; padding: 25px 0 15px; }
+  .app-header h1 {
+    font-size: 2em;
+    background: linear-gradient(90deg, #7b9dff, #c77dff, #ff7b9d);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .app-header p { color: #a0b0d0; font-size: 0.9em; margin-top: 5px; }
+  h2 { font-size: 1.4em; color: #7b9dff; margin: 20px 0 15px; border-left: 4px solid #c77dff; padding-left: 12px; }
+  .cards { display: grid; gap: 15px; }
+  .card {
+    background: rgba(30, 40, 90, 0.4);
+    border: 1px solid rgba(123, 157, 255, 0.2);
+    border-radius: 15px; padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:active { transform: scale(0.98); border-color: #c77dff; }
+  .card-icon { font-size: 2em; margin-bottom: 10px; }
+  .card h3 { color: #c77dff; margin-bottom: 8px; font-size: 1.1em; }
+  .card p { color: #b0b8d0; font-size: 0.9em; }
+  .planets { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0 15px; scrollbar-width: none; }
+  .planets::-webkit-scrollbar { display: none; }
+  .planet { flex: 0 0 auto; text-align: center; }
+  .planet:active .planet-circle { transform: scale(1.15); }
+  .planet-circle {
+    width: 70px; height: 70px; border-radius: 50%;
+    margin: 0 auto 8px; box-shadow: 0 0 20px currentColor;
+    animation: float 4s ease-in-out infinite; transition: transform 0.2s;
+  }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .planet span { font-size: 0.8em; color: #a0b0d0; }
+  .nasa-card {
+    background: rgba(30, 40, 90, 0.4); border-radius: 15px;
+    overflow: hidden; border: 1px solid rgba(123, 157, 255, 0.2); margin-top: 15px;
+  }
+  .nasa-img { width: 100%; height: 220px; object-fit: cover; background: #1a1a3a; display: block; }
+  .nasa-body { padding: 15px; }
+  .nasa-title { color: #c77dff; font-weight: 600; margin-bottom: 8px; }
+  .nasa-desc { color: #b0b8d0; font-size: 0.85em; max-height: 100px; overflow-y: auto; }
+  .loading { color: #7080a0; text-align: center; padding: 40px; }
+  .quiz-box {
+    background: rgba(30, 40, 90, 0.5); border-radius: 15px;
+    padding: 22px; border: 1px solid rgba(123, 157, 255, 0.3);
+  }
+  .quiz-progress { color: #7080a0; font-size: 0.85em; margin-bottom: 10px; }
+  .quiz-question { font-size: 1.1em; margin-bottom: 18px; color: #c77dff; line-height: 1.4; }
+  .quiz-option {
+    display: block; width: 100%; padding: 15px; margin: 10px 0;
+    background: rgba(123, 157, 255, 0.1);
+    border: 1px solid rgba(123, 157, 255, 0.3);
+    border-radius: 12px; color: #e8e8e8; cursor: pointer;
+    text-align: left; font-size: 0.95em; font-family: inherit;
+    transition: all 0.2s; min-height: 50px;
+  }
+  .quiz-option:active { background: rgba(123, 157, 255, 0.3); }
+  .quiz-option.correct { background: rgba(80, 220, 120, 0.4); border-color: #50dc78; }
+  .quiz-option.wrong { background: rgba(220, 80, 80, 0.4); border-color: #dc5050; }
+  .quiz-feedback { margin-top: 15px; font-size: 0.9em; min-height: 25px; }
+  .btn {
+    display: block; width: 100%; padding: 15px;
+    background: linear-gradient(90deg, #7b9dff, #c77dff);
+    color: white; border: none; border-radius: 30px;
+    font-size: 1em; font-weight: 600; cursor: pointer;
+    font-family: inherit; margin-top: 15px; min-height: 50px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .score-final { text-align: center; padding: 20px; font-size: 1.2em; color: #c77dff; }
+</style>
+</head>
+<body>
+
+<div class="page active" id="page-decouvrir">
+  <div class="app-header">
+    <h1>🌌 AstroInfo</h1>
+    <p>Explorez les mystères de l'Univers</p>
+  </div>
+  <h2>✨ À découvrir</h2>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🪐</div><h3>Le Système Solaire</h3><p>8 planètes, des centaines de lunes, des milliards d'astéroïdes.</p></div>
+    <div class="card"><div class="card-icon">🌠</div><h3>Les Étoiles</h3><p>Des géantes rouges aux naines blanches, le cycle de vie des étoiles.</p></div>
+    <div class="card"><div class="card-icon">🌌</div><h3>Les Galaxies</h3><p>La Voie Lactée compte plus de 100 milliards d'étoiles.</p></div>
+    <div class="card"><div class="card-icon">🕳️</div><h3>Trous Noirs</h3><p>Objets les plus mystérieux de l'Univers, où la gravité déforme l'espace-temps.</p></div>
+  </div>
+  <h2>🚀 Image du jour (NASA)</h2>
+  <div class="nasa-card">
+    <div class="loading" id="nasa-loading">Chargement de l'image NASA...</div>
+    <img class="nasa-img" id="nasa-img" style="display:none" alt="Image NASA du jour">
+    <div class="nasa-body" id="nasa-body" style="display:none">
+      <div class="nasa-title" id="nasa-title"></div>
+      <div class="nasa-desc" id="nasa-desc"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-planetes">
+  <div class="app-header">
+    <h1>🪐 Planètes</h1>
+    <p>Le Système Solaire</p>
+  </div>
+  <div class="planets" id="planetsContainer"></div>
+  <div id="planetDetail" style="margin-top:25px;"></div>
+</div>
+
+<div class="page" id="page-quiz">
+  <div class="app-header">
+    <h1>🧠 Quiz</h1>
+    <p>Testez vos connaissances</p>
+  </div>
+  <div class="quiz-box">
+    <div class="quiz-progress" id="quiz-progress"></div>
+    <div class="quiz-question" id="question"></div>
+    <div id="options"></div>
+    <div class="quiz-feedback" id="feedback"></div>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <div class="tab active" data-page="decouvrir"><span class="icon">🌌</span>Découvrir</div>
+  <div class="tab" data-page="planetes"><span class="icon">🪐</span>Planètes</div>
+  <div class="tab" data-page="quiz"><span class="icon">🧠</span>Quiz</div>
+</nav>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+    window.scrollTo(0, 0);
+  });
+});
+
+const planetes = [
+  { nom: "Mercure", couleur: "#a8a8a8", info: "La plus petite et la plus proche du Soleil. Températures extrêmes : de -180°C à +430°C." },
+  { nom: "Vénus", couleur: "#e6b87d", info: "La planète la plus chaude (465°C) à cause d'un effet de serre intense." },
+  { nom: "Terre", couleur: "#4a90d9", info: "Notre maison. La seule planète connue abritant la vie, avec 71% d'eau liquide." },
+  { nom: "Mars", couleur: "#c1440e", info: "La planète rouge. Abrite Olympus Mons, le plus grand volcan du Système Solaire (22 km)." },
+  { nom: "Jupiter", couleur: "#d9a066", info: "La plus grande planète. Sa Grande Tache Rouge est une tempête plus large que la Terre." },
+  { nom: "Saturne", couleur: "#e0c98a", info: "Célèbre pour ses anneaux spectaculaires composés de glace et de roche." },
+  { nom: "Uranus", couleur: "#9fd9d9", info: "La planète qui roule sur le côté : son axe est incliné à 98°." },
+  { nom: "Neptune", couleur: "#3b5bdb", info: "La plus lointaine. Vents les plus violents du Système Solaire (2100 km/h)." }
+];
+
+const container = document.getElementById('planetsContainer');
+planetes.forEach((p, i) => {
+  const div = document.createElement('div');
+  div.className = 'planet';
+  div.innerHTML = `<div class="planet-circle" style="background: radial-gradient(circle at 30% 30%, ${p.couleur}, #1a1a3a); color: ${p.couleur}"></div><span>${p.nom}</span>`;
+  div.onclick = () => {
+    document.getElementById('planetDetail').innerHTML = `<div class="card"><div class="card-icon" style="font-size:2.5em;">🪐</div><h3>${p.nom}</h3><p>${p.info}</p></div>`;
+  };
+  container.appendChild(div);
+});
+
+const questions = [
+  { q: "Quelle est la planète la plus proche du Soleil ?", options: ["Vénus", "Mercure", "Mars", "Terre"], bonne: 1, exp: "Mercure est à environ 58 millions de km du Soleil." },
+  { q: "Combien de temps met la lumière du Soleil pour atteindre la Terre ?", options: ["8 secondes", "8 minutes", "8 heures", "8 jours"], bonne: 1, exp: "La lumière voyage à 300 000 km/s et met ~8 min pour nous parvenir." },
+  { q: "Quel est le plus grand volcan du Système Solaire ?", options: ["L'Etna", "Le Mauna Kea", "Olympus Mons", "Le Vésuve"], bonne: 2, exp: "Olympus Mons, sur Mars, culmine à ~22 km." },
+  { q: "Qu'est-ce qu'une année-lumière ?", options: ["Une unité de temps", "Une unité de distance", "Une unité de masse", "Une constellation"], bonne: 1, exp: "Une année-lumière ≈ 9 460 milliards de km." },
+  { q: "Quelle planète est surnommée la 'planète rouge' ?", options: ["Vénus", "Jupiter", "Mars", "Saturne"], bonne: 2, exp: "Mars doit sa couleur à l'oxyde de fer sur sa surface." },
+  { q: "Combien de planètes compte le Système Solaire ?", options: ["7", "8", "9", "10"], bonne: 1, exp: "Depuis 2006, Pluton est classée 'planète naine' : il en reste 8." },
+  { q: "Quelle est la plus grande planète du Système Solaire ?", options: ["Saturne", "Neptune", "Jupiter", "Uranus"], bonne: 2, exp: "Jupiter pourrait contenir 1300 Terres." },
+  { q: "Que trouve-t-on au centre de notre galaxie ?", options: ["Le Soleil", "Un trou noir supermassif", "Une étoile géante", "Rien"], bonne: 1, exp: "Sagittarius A*, un trou noir de 4 millions de masses solaires." },
+  { q: "Quel est l'âge estimé de l'Univers ?", options: ["4,5 milliards d'années", "13,8 milliards d'années", "100 milliards d'années", "1 million d'années"], bonne: 1, exp: "L'Univers est né il y a environ 13,8 milliards d'années." },
+  { q: "Quelle planète tourne sur le côté (axe incliné à 98°) ?", options: ["Neptune", "Uranus", "Saturne", "Vénus"], bonne: 1, exp: "Uranus 'roule' sur son orbite, probablement suite à une collision géante." }
+];
+
+let currentQ = 0, score = 0;
+
+function afficherQuestion() {
+  if (currentQ >= questions.length) { afficherResultat(); return; }
+  const q = questions[currentQ];
+  document.getElementById('quiz-progress').textContent = `Question ${currentQ + 1} / ${questions.length} — Score : ${score}`;
+  document.getElementById('question').textContent = q.q;
+  document.getElementById('feedback').textContent = '';
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt;
+    btn.onclick = () => repondre(i, btn);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function repondre(index, btn) {
+  const q = questions[currentQ];
+  const feedback = document.getElementById('feedback');
+  const allBtns = document.querySelectorAll('.quiz-option');
+  allBtns.forEach(b => b.disabled = true);
+  if (index === q.bonne) {
+    btn.classList.add('correct');
+    feedback.style.color = '#50dc78';
+    feedback.textContent = '✅ ' + q.exp;
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.bonne].classList.add('correct');
+    feedback.style.color = '#dc5050';
+    feedback.textContent = '❌ ' + q.exp;
+  }
+  currentQ++;
+  setTimeout(() => {
+    if (currentQ < questions.length) afficherQuestion();
+    else afficherResultat();
+  }, 1800);
+}
+
+function afficherResultat() {
+  const pct = Math.round((score / questions.length) * 100);
+  let msg = '🌱 Continue à explorer !';
+  if (pct >= 50) msg = '🌟 Pas mal du tout !';
+  if (pct >= 80) msg = '🚀 Excellent !';
+  if (pct === 100) msg = '🏆 Parfait ! Tu es un astronome !';
+  document.getElementById('quiz-progress').textContent = '';
+  document.getElementById('question').textContent = '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('options').innerHTML = `
+    <div class="score-final">
+      <div style="font-size:2.5em; margin-bottom:10px;">${msg}</div>
+      <div style="font-size:1.5em; color:#7b9dff;">${score} / ${questions.length}</div>
+      <div style="color:#a0b0d0; margin-top:5px;">(${pct}%)</div>
+    </div>
+    <button class="btn" onclick="currentQ=0;score=0;afficherQuestion()">🔄 Recommencer</button>
+  `;
+}
+
+afficherQuestion();
+
+const NASA_KEY = 'DEMO_KEY';
+fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}`)
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('nasa-loading').style.display = 'none';
+    const img = document.getElementById('nasa-img');
+    if (data.media_type === 'image') { img.src = data.url; img.style.display = 'block'; }
+    document.getElementById('nasa-title').textContent = data.title;
+    document.getElementById('nasa-desc').textContent = data.explanation;
+    document.getElementById('nasa-body').style.display = 'block';
+  })
+  .catch(() => {
+    document.getElementById('nasa-loading').textContent = '📡 Image NASA indisponible.';
+  });
+</script>
+</body>
+</html>
